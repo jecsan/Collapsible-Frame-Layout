@@ -2,15 +2,27 @@ package com.opensource.jose.collapsibleframelayout;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.FrameLayout;
+import library.CollapsibleFrameLayout;
 
 public class MainActivity extends Activity {
+
+    private CollapsibleFrameLayout frameLayout;
+    private View anchor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        frameLayout = (CollapsibleFrameLayout) findViewById(R.id.frame);
+        anchor =  findViewById(R.id.anchor);
+        frameLayout.setCollapseAnchor(anchor);
+
     }
 
     @Override

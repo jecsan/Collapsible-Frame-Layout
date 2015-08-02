@@ -1,15 +1,25 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                tools:context=".MainActivity">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              tools:context=".MainActivity">
 
 
-    <library.CollapsibleFrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="150dp">
+	<library.CollapsibleFrameLayout
+			android:layout_gravity="bottom"
+			android:id="@+id/frame"
+			android:background="@android:color/holo_orange_light"
+			android:layout_width="match_parent"
+			android:layout_height="150dp">
 
 
-    </library.CollapsibleFrameLayout>
+	</library.CollapsibleFrameLayout>
 
-</RelativeLayout>
+	<TextView android:id="@+id/anchor"
+	          android:layout_width="wrap_content"
+	          android:layout_height="wrap_content"
+	          android:text="collapse"
+	          android:layout_gravity="center"/>
+
+</LinearLayout>

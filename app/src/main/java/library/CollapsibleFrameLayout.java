@@ -5,23 +5,22 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.TouchDelegate;
-import android.view.View;
-import android.view.ViewGroup;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.*;
 import android.view.animation.Animation;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 /**
  * Created by jose on 8/2/15.
  */
 public class CollapsibleFrameLayout extends FrameLayout{
 
-
     private int mLastY;
     private int mDefaultHeight;
     private boolean mExpanded = true;
-    private static final int COLLAPSE_THRESHOLD = 300;
+    private int mPosition;
 
     private View mCollapseAnchor;
 
@@ -35,77 +34,108 @@ public class CollapsibleFrameLayout extends FrameLayout{
                     break;
                 case MotionEvent.ACTION_MOVE:
                     int yTranslate = Y - mLastY;
-
                     if (mExpanded) {
-                        if (yTranslate < 0 && yTranslate >= -COLLAPSE_THRESHOLD) {
+                        if (yTranslate < 0 && yTranslate >= -mDefaultHeight) {
                             setTranslationY(yTranslate);
-
+                            translateAnchor(yTranslate);
                         }
                     } else {
-                        if ((yTranslate - COLLAPSE_THRESHOLD) <= 0 && (yTranslate - COLLAPSE_THRESHOLD) >= -COLLAPSE_THRESHOLD) {
-                            setTranslationY(yTranslate - COLLAPSE_THRESHOLD);
-
+                        if ((yTranslate - mDefaultHeight) <= 0 && (yTranslate - mDefaultHeight) >= -mDefaultHeight) {
+                            float translation = yTranslate - mDefaultHeight;
+                            setTranslationY(translation);
+                            translateAnchor(translation);
                         }
                     }
-
                     return false;
                 case MotionEvent.ACTION_UP:
                     int transY = Y - mLastY;
-                    if (transY <= -150) { //
-                        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(CollapsibleFrameLayout.this, "translationY", -COLLAPSE_THRESHOLD);
-                        objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                            @Override
-                            public void onAnimationUpdate(ValueAnimator animation) {
-                                float val = (float) animation.getAnimatedValue();
-                                setTranslationY(val);
-//                                ViewGroup.LayoutParams rLayoutParams = feedListBlankHeader.getLayoutParams();
-//                                rLayoutParams.height = (int) (mDefaultHeaderHeight - Math.abs(val));
-//                                feedListBlankHeader.setLayoutParams(rLayoutParams);
-                            }
-                        });
-                        objectAnimator.addListener(new DefaultAnimationListener() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                mLastY = -COLLAPSE_THRESHOLD;
-                                mExpanded = false;
-//                                expandHandle.setAlpha(1);
-//                                collapseHandle.setAlpha(0);
-                            }
-                        });
-                        objectAnimator.start();
-
-
+                    if (transY <= -(mDefaultHeight/2)) { //
+                        collapse();
                     } else {
-                        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(CollapsibleFrameLayout.this, "translationY", 0);
-                        objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                            @Override
-                            public void onAnimationUpdate(ValueAnimator animation) {
-                                float val = (float) animation.getAnimatedValue();
-                                setTranslationY(val);
-//                                ViewGroup.LayoutParams rLayoutParams = feedListBlankHeader.getLayoutParams();
-//                                rLayoutParams.height = (int) (mDefaultHeaderHeight - Math.abs(val));
-//                                feedListBlankHeader.setLayoutParams(rLayoutParams);
-                            }
-                        });
-                        objectAnimator.addListener(new DefaultAnimationListener() {
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                mLastY = 0;
-                                mExpanded = true;
-//                                expandHandle.setAlpha(0);
-//                                collapseHandle.setAlpha(1);
-                            }
-                        });
-                        objectAnimator.start();
-
+                        expand();
                     }
-
                     break;
             }
             return true;
 
         }
     };
+
+    public void collapse(){
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(CollapsibleFrameLayout.this, "translationY", -mDefaultHeight);
+        objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float val = (float) animation.getAnimatedValue();
+                setTranslationY(val);
+                translateAnchor(val);
+            }
+        });
+        objectAnimator.addListener(new DefaultAnimationListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mLastY = -mDefaultHeight;
+                mExpanded = false;
+            }
+        });
+        objectAnimator.start();
+    }
+
+    public void expand(){
+        ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(CollapsibleFrameLayout.this, "translationY", 0);
+        objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float val = (float) animation.getAnimatedValue();
+                setTranslationY(val);
+                translateAnchor(val);
+            }
+        });
+        objectAnimator.addListener(new DefaultAnimationListener() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mLastY = 0;
+                mExpanded = true;
+
+            }
+        });
+        objectAnimator.start();
+    }
+
+    private void translateAnchor(float translation){
+        if(mCollapseAnchor != null){
+            mCollapseAnchor.setTranslationY(translation);
+        }
+    }
+
+
+    public void setCollapseAnchor(View collapseAnchor){
+        mCollapseAnchor = collapseAnchor;
+        mCollapseAnchor.setOnTouchListener(mTouchListener);
+        setOnTouchListener(null);
+    }
+
+
+    public int pxToDp(int px) {
+        DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
+        int dp = Math.round(px / (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+        return dp;
+    }
+
+    public int dpToPx(int dp) {
+        DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
+        int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+        return px;
+    }
+
+
+    //TODO if Layout is attached to top/bottom
+    private void checkPosition(){
+        Log.d("","Top:"+getTop()+" Bottom:"+getBottom());
+        Log.d("","Actionbar height in PX:"+dpToPx(56));
+        Log.d("","ScreenHeight:"+getResources().getDisplayMetrics().heightPixels);
+    }
+
 
 
 
@@ -133,33 +163,16 @@ public class CollapsibleFrameLayout extends FrameLayout{
         }
     }
 
-//        public void forceHide(){
-//            ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(header, "translationY", -COLLAPSE_THRESHOLD);
-//            objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//                @Override
-//                public void onAnimationUpdate(ValueAnimator animation) {
-//                    float val = (float) animation.getAnimatedValue();
-//                    ViewGroup.LayoutParams rLayoutParams = feedListBlankHeader.getLayoutParams();
-//                    rLayoutParams.height = (int) (mDefaultHeaderHeight - Math.abs(val));
-//                    feedListBlankHeader.setLayoutParams(rLayoutParams);
-//                }
-//            });
-//            objectAnimator.addListener(new DefaultAnimationListener() {
-//                @Override
-//                public void onAnimationEnd(Animator animation) {
-//                    mLastY = -COLLAPSE_THRESHOLD;
-//                    mExpanded = false;
-//                    expandHandle.setAlpha(1);
-//                    collapseHandle.setAlpha(0);
-//                }
-//            });
-//            objectAnimator.start();
-//        }
-//        }
-//    };
-
     private void init(){
         setOnTouchListener(mTouchListener);
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mDefaultHeight = getHeight();
+                getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
+
     }
 
     public CollapsibleFrameLayout(Context context) {
